@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ledger App</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .app-container {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Summary Panel */
+    .summary-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .summary-box {
+      border: 2px solid #fff;
+      padding: 16px 12px;
+      text-align: center;
+    }
+
+    .summary-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      opacity: 0.7;
+    }
+
+    .summary-value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    /* Utility Bar */
+    .utility-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .utility-btn {
+      background: transparent;
+      color: #fff;
+      border: 1px solid #fff;
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      flex: 1;
+      min-width: 80px;
+    }
+
+    .utility-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .utility-btn.danger {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    .utility-btn.danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Input Section */
+    .input-section {
+      margin-bottom: 24px;
+    }
+
+    .input-textarea {
+      width: 100%;
+      background: #000;
+      color: #fff;
+      border: 2px solid #fff;
+      padding: 12px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 100px;
+      margin-bottom: 12px;
+    }
+
+    .input-textarea::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .add-btn {
+      width: 100%;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .add-btn:hover {
+      background: #1d4ed8;
+    }
+
+    .add-btn:active {
+      background: #1e40af;
+    }
+
+    /* Timeline */
+    .timeline {
+      position: relative;
+      padding-left: 24px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #fff;
+    }
+
+    /* Ledger Card */
+    .ledger-card {
+      position: relative;
+      border: 2px solid #fff;
+      margin-bottom: 12px;
+      background: #000;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .ledger-card.received {
+      border-color: #2563eb;
+    }
+
+    .ledger-card::before {
+      content: '';
+      position: absolute;
+      left: -20px;
+      top: 16px;
+      width: 12px;
+      height: 12px;
+      background: #fff;
+      border-radius: 0;
+    }
+
+    .ledger-card.received::before {
+      background: #2563eb;
+    }
+
+    .card-compact {
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-info {
+      flex: 1;
+    }
+
+    .card-date {
+      font-size: 11px;
+      opacity: 0.6;
+      margin-bottom: 4px;
+    }
+
+    .card-model {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .card-amount {
+      font-size: 18px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .card-expanded {
+      padding: 0 14px 14px 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .expanded-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .expanded-row:last-child {
+      border-bottom: none;
+    }
+
+    .expanded-label {
+      font-size: 12px;
+      opacity: 0.6;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .expanded-value {
+      font-size: 14px;
+    }
+
+    .tracking-input {
+      width: 100%;
+      background: #000;
+      color: #fff;
+      border: 1px solid #fff;
+      padding: 10px;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    .tracking-input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .toggle-btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 12px;
+      border: 2px solid #fff;
+      background: transparent;
+      color: #fff;
+    }
+
+    .toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .toggle-btn.received {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+
+    .toggle-btn.received:hover {
+      background: #1d4ed8;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      opacity: 0.5;
+    }
+
+    .hidden-input {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo } = React;
+
+    // Storage utilities
+    const STORAGE_KEY = 'ledger-entries';
+
+    const saveToLocalStorage = (data) => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    };
+
+    const loadFromLocalStorage = () => {
+      try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+      } catch (e) {
+        return [];
+      }
+    };
+
+    // Parser function
+    const parseLedgerEntry = (text) => {
+      const lines = text.trim().split('\n').map(line => line.trim()).filter(line => line.length > 0);
+      
+      if (lines.length < 4) {
+        return null;
+      }
+
+      // Line 1: Match Ordered(paid, return) pattern
+      const orderedMatch = lines[0].match(/Ordered\s*\(\s*(\d+)\s*,\s*(\d+)\s*\)/i);
+      if (!orderedMatch) {
+        return null;
+      }
+
+      const amount = parseInt(orderedMatch[1], 10);
+      const returnAmount = parseInt(orderedMatch[2], 10);
+
+      // Line 2: Name
+      const name = lines[1];
+
+      // Line 3: Model
+      const model = lines[2];
+
+      // Line 4: Pincode
+      const pincode = lines[3];
+
+      return {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        amount,
+        returnAmount,
+        name,
+        model,
+        pincode,
+        isReceived: false,
+        trackingId: '',
+        date: new Date().toISOString().split('T')[0]
+      };
+    };
+
+    // Backup utilities
+    const exportBackup = (data) => {
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ledger-backup.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    const importBackup = (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (!Array.isArray(data)) {
+              reject(new Error('Invalid format: expected an array of ledger entries'));
+              return;
+            }
+            // Validate each entry has required fields
+            const valid = data.every(entry => 
+              typeof entry === 'object' &&
+              entry !== null &&
+              typeof entry.amount === 'number' &&
+              typeof entry.returnAmount === 'number' &&
+              typeof entry.name === 'string' &&
+              typeof entry.model === 'string' &&
+              typeof entry.pincode === 'string'
+            );
+            if (!valid) {
+              reject(new Error('Invalid entry format in backup file'));
+              return;
+            }
+            resolve(data);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsText(file);
+      });
+    };
+
+    // Summary Panel Component
+    const SummaryPanel = ({ entries }) => {
+      const totals = useMemo(() => {
+        const totalPaid = entries.reduce((sum, e) => sum + e.amount, 0);
+        const totalReceived = entries
+          .filter(e => e.isReceived)
+          .reduce((sum, e) => sum + e.amount, 0);
+        const earnings = entries
+          .filter(e => e.isReceived)
+          .reduce((sum, e) => sum + (e.returnAmount - e.amount), 0);
+        return { totalPaid, totalReceived, earnings };
+      }, [entries]);
+
+      return (
+        <div className="summary-panel">
+          <div className="summary-box">
+            <div className="summary-label">Total Paid</div>
+            <div className="summary-value">{totals.totalPaid.toLocaleString()}</div>
+          </div>
+          <div className="summary-box">
+            <div className="summary-label">Total Received</div>
+            <div className="summary-value">{totals.totalReceived.toLocaleString()}</div>
+          </div>
+          <div className="summary-box">
+            <div className="summary-label">Earnings</div>
+            <div className="summary-value" style={{ color: totals.earnings >= 0 ? '#2563eb' : '#ef4444' }}>
+              {totals.earnings >= 0 ? '+' : ''}{totals.earnings.toLocaleString()}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Input Section Component
+    const InputSection = ({ onAddEntry, onExport, onImport, onReset }) => {
+      const [inputText, setInputText] = useState('');
+      const fileInputRef = React.useRef(null);
+
+      const handleAdd = () => {
+        if (!inputText.trim()) return;
+        const entry = parseLedgerEntry(inputText);
+        if (entry) {
+          onAddEntry(entry);
+          setInputText('');
+        } else {
+          alert('Invalid input format. Please use:\nOrdered(paid, return)\nName\nModel\nPincode');
+        }
+      };
+
+      const handleImportClick = () => {
+        fileInputRef.current?.click();
+      };
+
+      const handleFileChange = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          const data = await importBackup(file);
+          onImport(data);
+        } catch (err) {
+          alert('Import failed: ' + err.message);
+        }
+        e.target.value = '';
+      };
+
+      return (
+        <div className="input-section">
+          <div className="utility-bar">
+            <button className="utility-btn" onClick={onExport}>Export Backup</button>
+            <button className="utility-btn" onClick={handleImportClick}>Import Backup</button>
+            <button className="utility-btn danger" onClick={onReset}>Reset</button>
+          </div>
+          <textarea
+            className="input-textarea"
+            placeholder={"Paste ledger entry here...\n\nExample:\nOrdered(40000, 41000)\nErum\n1x g45 8/128\n110091"}
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+          />
+          <button className="add-btn" onClick={handleAdd}>Add Entry</button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            className="hidden-input"
+            onChange={handleFileChange}
+          />
+        </div>
+      );
+    };
+
+    // Ledger Card Component
+    const LedgerCard = ({ entry, onToggleReceived, onUpdateTrackingId }) => {
+      const [expanded, setExpanded] = useState(false);
+
+      const handleCardClick = (e) => {
+        // Don't expand if clicking on interactive elements
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
+          return;
+        }
+        setExpanded(!expanded);
+      };
+
+      const handleTrackingChange = (e) => {
+        onUpdateTrackingId(entry.id, e.target.value);
+      };
+
+      const handleToggle = (e) => {
+        e.stopPropagation();
+        onToggleReceived(entry.id);
+      };
+
+      return (
+        <div className={`ledger-card ${entry.isReceived ? 'received' : ''}`} onClick={handleCardClick}>
+          <div className="card-compact">
+            <div className="card-info">
+              <div className="card-date">{entry.date}</div>
+              <div className="card-model">{entry.model}</div>
+            </div>
+            <div className="card-amount">{entry.amount.toLocaleString()}</div>
+          </div>
+          {expanded && (
+            <div className="card-expanded">
+              <div className="expanded-row">
+                <span className="expanded-label">Name</span>
+                <span className="expanded-value">{entry.name}</span>
+              </div>
+              <div className="expanded-row">
+                <span className="expanded-label">Pincode</span>
+                <span className="expanded-value">{entry.pincode}</span>
+              </div>
+              <div className="expanded-row">
+                <span className="expanded-label">Return Amount</span>
+                <span className="expanded-value">{entry.returnAmount.toLocaleString()}</span>
+              </div>
+              <div className="expanded-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                <span className="expanded-label" style={{ marginBottom: '8px' }}>Tracking ID</span>
+                <input
+                  type="text"
+                  className="tracking-input"
+                  placeholder="Enter tracking ID"
+                  value={entry.trackingId}
+                  onChange={handleTrackingChange}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+              <button
+                className={`toggle-btn ${entry.isReceived ? 'received' : ''}`}
+                onClick={handleToggle}
+              >
+                {entry.isReceived ? '✓ Received' : 'Mark Received'}
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    // Timeline Component
+    const Timeline = ({ entries, onToggleReceived, onUpdateTrackingId }) => {
+      if (entries.length === 0) {
+        return (
+          <div className="empty-state">
+            <p>No entries yet. Add your first ledger entry above.</p>
+          </div>
+        );
+      }
+
+      return (
+        <div className="timeline">
+          {[...entries].reverse().map(entry => (
+            <LedgerCard
+              key={entry.id}
+              entry={entry}
+              onToggleReceived={onToggleReceived}
+              onUpdateTrackingId={onUpdateTrackingId}
+            />
+          ))}
+        </div>
+      );
+    };
+
+    // Main App Component
+    const App = () => {
+      const [entries, setEntries] = useState(() => loadFromLocalStorage());
+
+      useEffect(() => {
+        saveToLocalStorage(entries);
+      }, [entries]);
+
+      const addEntry = useCallback((entry) => {
+        setEntries(prev => [...prev, entry]);
+      }, []);
+
+      const toggleReceived = useCallback((id) => {
+        setEntries(prev => prev.map(entry =>
+          entry.id === id ? { ...entry, isReceived: !entry.isReceived } : entry
+        ));
+      }, []);
+
+      const updateTrackingId = useCallback((id, trackingId) => {
+        setEntries(prev => prev.map(entry =>
+          entry.id === id ? { ...entry, trackingId } : entry
+        ));
+      }, []);
+
+      const handleExport = useCallback(() => {
+        exportBackup(entries);
+      }, [entries]);
+
+      const handleImport = useCallback((data) => {
+        if (confirm(`This will replace all ${entries.length} current entries with ${data.length} imported entries. Continue?`)) {
+          setEntries(data);
+        }
+      }, [entries.length]);
+
+      const handleReset = useCallback(() => {
+        if (confirm('Are you sure you want to delete all entries? This cannot be undone.')) {
+          setEntries([]);
+        }
+      }, []);
+
+      return (
+        <div className="app-container">
+          <SummaryPanel entries={entries} />
+          <InputSection
+            onAddEntry={addEntry}
+            onExport={handleExport}
+            onImport={handleImport}
+            onReset={handleReset}
+          />
+          <Timeline
+            entries={entries}
+            onToggleReceived={toggleReceived}
+            onUpdateTrackingId={updateTrackingId}
+          />
+        </div>
+      );
+    };
+
+    // Render the app
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
